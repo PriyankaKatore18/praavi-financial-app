@@ -5,7 +5,7 @@
 
 import { UserRole } from "../types";
 
-const API_BASE = "/api";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
 
 export function getAuthToken(): string | null {
   return localStorage.getItem("praavi_jwt_token");
