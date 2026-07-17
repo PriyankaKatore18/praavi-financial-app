@@ -1,0 +1,6 @@
+{
+  "name": "Praavi Consultants — Financial Management System",
+  "description": "Financial Management System for Praavi Consultants replacing Excel tracking with secure accounting, payroll, salary allocation, and reporting.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
