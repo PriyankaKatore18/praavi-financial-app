@@ -96,7 +96,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               </label>
               <button 
                 type="button" 
-                onClick={() => setError("Please contact your administrator Pooja to reset your password.")}
+                onClick={() => setError("Please contact your administrator to reset your password.")}
                 className="text-xs text-slate-400 hover:text-emerald-400 transition-colors"
               >
                 Forgot?
@@ -165,7 +165,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               onClick={() => handleQuickLogin("head@praavi.com", "head123")}
               className="py-1.5 px-3 rounded bg-slate-900 hover:bg-slate-850 text-[11px] font-medium text-amber-300 border border-slate-800 hover:border-amber-900/40 transition-all flex items-center justify-between"
             >
-              <span>2. Pooja (Finance Head)</span>
+              <span>2. Finance Head</span>
               <span className="text-slate-500 font-mono">head123</span>
             </button>
             <button

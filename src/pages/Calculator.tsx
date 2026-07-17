@@ -9,7 +9,7 @@ import {
   CheckSquare, ArrowRight, ShieldCheck, ChevronRight
 } from "lucide-react";
 import { api } from "../services/api";
-import { formatIndianCurrency, calculatePaymentDistribution } from "../domain/finance/calculations";
+import { formatIndianCurrency, calculatePaymentDistribution, accountUsesGST } from "../domain/finance/calculations";
 import { Department, GSTType } from "../types";
 
 export default function CalculatorPage() {
@@ -63,10 +63,7 @@ export default function CalculatorPage() {
         settings,
         accounts
       );
-      const acc = accounts.find(a => a.id === landedAccount);
-      if (acc) {
-        gstPct = (acc.name.toLowerCase().includes("sbi current") || acc.name.toLowerCase().includes("axis current")) ? 18 : 0;
-      }
+      gstPct = accountUsesGST(landedAccount) ? 18 : 0;
     } catch (err) {
       console.error(err);
     }

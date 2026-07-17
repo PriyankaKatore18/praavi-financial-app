@@ -6,7 +6,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { db, hashPassword, createToken, verifyToken, generateUUID } from "./db";
 import { 
-  calculatePaymentDistribution, calculateDepartmentCosts, formatIndianCurrency, roundRupees
+  accountUsesGST, calculatePaymentDistribution, calculateDepartmentCosts, formatIndianCurrency, roundRupees
 } from "../src/domain/finance/calculations";
 import { 
   computeBankBalances, computeMarketingCardBalances, computeSalaryPool, computeCoverageTracker 
@@ -292,9 +292,7 @@ apiRouter.post("/payments", requireAuth, requireRoles([UserRole.ACCOUNTANT, User
     );
 
     // Automate GST percentage by selected account
-    const isCurrentAccount = landedAccount.name.toLowerCase().includes("sbi current") || 
-                            landedAccount.name.toLowerCase().includes("axis current");
-    const calculated_gst_pct = isCurrentAccount ? 0.18 : 0;
+    const calculated_gst_pct = accountUsesGST(landed_in_account_id) ? 0.18 : 0;
 
     // 2. Create the payment
     const payment = db.payments.create({
@@ -1117,9 +1115,7 @@ apiRouter.post("/migration/import", requireAuth, requireRoles([UserRole.ADMIN]),
       );
 
       // Determine GST rate
-      const landedAccount = accounts.find(a => a.id === landed_in_account_id);
-      const accountName = landedAccount ? landedAccount.name.toLowerCase() : "";
-      const calculated_gst_pct = (accountName.includes("sbi current") || accountName.includes("axis current")) ? 0.18 : 0;
+      const calculated_gst_pct = accountUsesGST(landed_in_account_id) ? 0.18 : 0;
 
       // Write Payment
       const payment = db.payments.create({

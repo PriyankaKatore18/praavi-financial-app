@@ -5,6 +5,12 @@
 
 import { Department, GSTType, CostCategory, CostBasis, Settings } from "../../types";
 
+const GST_ENABLED_ACCOUNT_IDS = new Set(["ba-sbi-current", "ba-axis-current"]);
+
+export function accountUsesGST(accountId: string): boolean {
+  return GST_ENABLED_ACCOUNT_IDS.has(accountId);
+}
+
 /**
  * Rounds a number to exactly 2 decimal places (paise precision).
  */
@@ -140,11 +146,7 @@ export function calculatePaymentDistribution(
   settings: Settings,
   bankAccounts: { id: string; name: string }[]
 ): DistributionResult {
-  // Determine GST percentage by account
-  const landedAccount = bankAccounts.find(a => a.id === landedAccountId);
-  const accountName = landedAccount ? landedAccount.name.toLowerCase() : "";
-  const hasGST = accountName.includes("sbi current") || accountName.includes("axis current");
-  const gst_pct = hasGST ? 0.18 : 0;
+  const gst_pct = accountUsesGST(landedAccountId) ? 0.18 : 0;
 
   // 1. Base Amount & GST Amount calculation
   let base_amount = 0;
@@ -161,6 +163,28 @@ export function calculatePaymentDistribution(
   // 2. Fetch costs for calculations
   const deptCosts = calculateDepartmentCosts(department, costBasisList, settings);
   const revenue_required = deptCosts.revenue_required;
+
+  if (revenue_required <= 0) {
+    return {
+      base_amount,
+      gst_amount,
+      salary_pool: 0,
+      total_salaries: 0,
+      rent_share: 0,
+      car_emi_share: 0,
+      subscriptions_share: 0,
+      light_share: 0,
+      laptop_share: 0,
+      misc_share: 0,
+      rent_emi_total: 0,
+      subscriptions_misc_total: 0,
+      total_overheads: 0,
+      usable_amount: 0,
+      marketing_amount: 0,
+      profit_amount: base_amount,
+      employee_shares: []
+    };
+  }
 
   // Get Individual Overhead values
   const getOverheadValue = (name: string): number => {
@@ -253,8 +277,7 @@ export function calculatePaymentDistribution(
     // Resolve employee rounding difference with salary_pool
     const emp_difference = roundRupees(salary_pool - allocated_employee_sum);
     if (Math.abs(emp_difference) > 0 && employee_shares.length > 0) {
-      // Add rounding error to the employee with the largest salary (usually Pooja at index of Management)
-      // find employee with largest monthly salary
+      // Add rounding error to the employee with the largest salary.
       let largestIndex = 0;
       let largestSalary = 0;
       for (let i = 0; i < employee_shares.length; i++) {

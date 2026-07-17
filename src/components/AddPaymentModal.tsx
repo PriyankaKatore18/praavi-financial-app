@@ -8,7 +8,7 @@ import {
   X, Sparkles, AlertTriangle, ToggleLeft, ToggleRight, CheckSquare, ArrowRight, HelpCircle 
 } from "lucide-react";
 import { api } from "../services/api";
-import { formatIndianCurrency, calculatePaymentDistribution } from "../domain/finance/calculations";
+import { formatIndianCurrency, calculatePaymentDistribution, accountUsesGST } from "../domain/finance/calculations";
 import { Department, GSTType } from "../types";
 
 interface AddPaymentModalProps {
@@ -69,9 +69,7 @@ export default function AddPaymentModal({ isOpen, onClose, onSuccess, initialAcc
   }, [isOpen, initialAccountId]);
 
   const isLandedAccountCurrent = (id: string) => {
-    const acc = accounts.find(a => a.id === id);
-    if (!acc) return false;
-    return acc.name.toLowerCase().includes("sbi current") || acc.name.toLowerCase().includes("axis current");
+    return accountUsesGST(id);
   };
 
   // Live breakdown calculation
@@ -357,11 +355,11 @@ export default function AddPaymentModal({ isOpen, onClose, onSuccess, initialAcc
                         <span className="font-mono font-bold text-slate-800">{formatIndianCurrency(liveBreakdown.subscriptions_misc_total)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Marketing (Webakoof/Credit):</span>
+                        <span className="text-slate-500">Marketing (Department Card):</span>
                         <span className="font-mono font-bold text-slate-800">{formatIndianCurrency(liveBreakdown.marketing_amount)}</span>
                       </div>
                       <div className="flex justify-between border-b border-slate-200 pb-2">
-                        <span className="text-slate-500">Praavi Net Profit:</span>
+                        <span className="text-slate-500">Net Profit:</span>
                         <span className="font-mono font-bold text-slate-850">{formatIndianCurrency(liveBreakdown.profit_amount)}</span>
                       </div>
 

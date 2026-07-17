@@ -7,13 +7,13 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import pg from "pg";
-import { 
-  User, UserRole, CostBasis, CostCategory, Settings, 
-  Account, AccountType, MarketingCard, Payment, 
-  PaymentDistribution, EmployeePaymentShare, DistributionTransfer, 
-  TransferLog, ReimbursementLog, PayrollDisbursementLog, 
-  SalaryPoolArrearsLedger, SalaryPoolPersonOwed, Drawing, 
-  AuditLog, ImportBatch, TransferStatus, ReimbursementStatus, PayrollStatus, ArrearsStatus
+import {
+  User, UserRole, CostBasis, CostCategory, Settings,
+  Account, AccountType, MarketingCard, Payment,
+  PaymentDistribution, EmployeePaymentShare, DistributionTransfer,
+  TransferLog, ReimbursementLog, PayrollDisbursementLog,
+  SalaryPoolArrearsLedger, SalaryPoolPersonOwed, Drawing,
+  AuditLog, ImportBatch, TransferStatus
 } from "../src/types";
 
 // Database storage file path
@@ -22,7 +22,7 @@ const DB_FILE = path.join(process.cwd(), "db.json");
 // JWT secret key (auto-generated once if not exists)
 let JWT_SECRET = process.env.JWT_SECRET || "praavi_secret_key_1234_secure";
 
-interface DatabaseSchema {
+export interface DatabaseSchema {
   users: User[];
   cost_basis: CostBasis[];
   settings: Settings[];
@@ -40,6 +40,185 @@ interface DatabaseSchema {
   drawings: Drawing[];
   audit_logs: AuditLog[];
   import_batches: ImportBatch[];
+}
+
+function createClientReadyState(timestamp = new Date().toISOString()): DatabaseSchema {
+  const makeUser = (id: string, full_name: string, email: string, password: string, role: UserRole): User => ({
+    id,
+    full_name,
+    email,
+    password_hash: hashPassword(password),
+    role,
+    is_active: true,
+    created_at: timestamp,
+    updated_at: timestamp
+  });
+
+  const makeCostBasis = (id: string, category: CostCategory, name: string): CostBasis => ({
+    id,
+    category,
+    name,
+    monthly_amount: 0,
+    is_active: true,
+    created_at: timestamp,
+    updated_at: timestamp
+  });
+
+  const costBasis: CostBasis[] = [
+    makeCostBasis("cb-prajakta", CostCategory.TEAM_WEBDEV, "Web Dev Employee 1"),
+    makeCostBasis("cb-abhi", CostCategory.TEAM_WEBDEV, "Web Dev Employee 2"),
+    makeCostBasis("cb-vaishnavee-web", CostCategory.TEAM_WEBDEV, "Web Dev Employee 3"),
+    makeCostBasis("cb-bhushan", CostCategory.TEAM_WEBDEV, "Web Dev Employee 4"),
+    makeCostBasis("cb-vipin", CostCategory.TEAM_WEBDEV, "Web Dev Employee 5"),
+    makeCostBasis("cb-priyanka", CostCategory.TEAM_WEBDEV, "Web Dev Employee 6"),
+    makeCostBasis("cb-shreyas", CostCategory.TEAM_DM, "Digital Marketing Employee 1"),
+    makeCostBasis("cb-prathamesh", CostCategory.TEAM_DM, "Digital Marketing Employee 2"),
+    makeCostBasis("cb-shradhha", CostCategory.TEAM_DM, "Digital Marketing Employee 3"),
+    makeCostBasis("cb-ayush", CostCategory.TEAM_DM, "Digital Marketing Employee 4"),
+    makeCostBasis("cb-vaishnavee-k", CostCategory.TEAM_DM, "Digital Marketing Employee 5"),
+    makeCostBasis("cb-pratik", CostCategory.TEAM_DM, "Digital Marketing Employee 6"),
+    makeCostBasis("cb-amrut", CostCategory.TEAM_DM, "Digital Marketing Employee 7"),
+    makeCostBasis("cb-sumedh", CostCategory.TEAM_DM, "Digital Marketing Employee 8"),
+    makeCostBasis("cb-pooja", CostCategory.MANAGEMENT, "Management 1"),
+    makeCostBasis("cb-malhar", CostCategory.MANAGEMENT, "Management 2"),
+    makeCostBasis("cb-vishal", CostCategory.MANAGEMENT, "Management 3"),
+    makeCostBasis("cb-aryan", CostCategory.MANAGEMENT, "Management 4"),
+    makeCostBasis("cb-tanuja", CostCategory.MANAGEMENT, "Management 5"),
+    makeCostBasis("cb-sakshi", CostCategory.MANAGEMENT, "Management 6"),
+    makeCostBasis("cb-rent", CostCategory.OVERHEAD, "Rent"),
+    makeCostBasis("cb-car-emi", CostCategory.OVERHEAD, "Car EMI"),
+    makeCostBasis("cb-subscriptions", CostCategory.OVERHEAD, "Subscriptions"),
+    makeCostBasis("cb-light-bill", CostCategory.OVERHEAD, "Light bill"),
+    makeCostBasis("cb-laptop-rentals", CostCategory.OVERHEAD, "Laptop rentals"),
+    makeCostBasis("cb-misc", CostCategory.OVERHEAD, "Misc")
+  ];
+
+  return {
+    users: [
+      makeUser("u-admin", "Administrator", "admin@praavi.com", "admin123", UserRole.ADMIN),
+      makeUser("u-head", "Finance Head", "head@praavi.com", "head123", UserRole.FINANCE_HEAD),
+      makeUser("u-accountant", "Accountant", "accountant@praavi.com", "accountant123", UserRole.ACCOUNTANT)
+    ],
+    cost_basis: costBasis,
+    settings: [
+      {
+        id: "settings-global",
+        target_profit_margin: 0,
+        marketing_cap_pct: 0,
+        current_month_number: 0,
+        webdev_marketing_budget: 0,
+        dm_marketing_budget: 0,
+        financial_year_start_month: 4,
+        currency_code: "INR",
+        created_at: timestamp,
+        updated_at: timestamp
+      }
+    ],
+    accounts: [
+      {
+        id: "ba-sbi-current",
+        name: "Primary Current Account",
+        account_type: AccountType.BANK,
+        opening_balance: 0,
+        actual_balance: 0,
+        is_active: true,
+        created_at: timestamp,
+        updated_at: timestamp
+      },
+      {
+        id: "ba-axis-current",
+        name: "Secondary Current Account",
+        account_type: AccountType.BANK,
+        opening_balance: 0,
+        actual_balance: 0,
+        is_active: true,
+        created_at: timestamp,
+        updated_at: timestamp
+      },
+      {
+        id: "ba-boi-savings",
+        name: "Owner Savings Account",
+        account_type: AccountType.BANK,
+        opening_balance: 0,
+        actual_balance: 0,
+        is_active: true,
+        created_at: timestamp,
+        updated_at: timestamp
+      },
+      {
+        id: "ba-kotak",
+        name: "Rent & EMI Account",
+        account_type: AccountType.BANK,
+        opening_balance: 0,
+        actual_balance: 0,
+        is_active: true,
+        created_at: timestamp,
+        updated_at: timestamp
+      },
+      {
+        id: "ba-janseva",
+        name: "Profit Reserve Account",
+        account_type: AccountType.BANK,
+        opening_balance: 0,
+        actual_balance: 0,
+        is_active: true,
+        created_at: timestamp,
+        updated_at: timestamp
+      },
+      {
+        id: "ba-axis-savings",
+        name: "Expense Savings Account",
+        account_type: AccountType.BANK,
+        opening_balance: 0,
+        actual_balance: 0,
+        is_active: true,
+        created_at: timestamp,
+        updated_at: timestamp
+      }
+    ],
+    marketing_cards: [
+      {
+        id: "mc-webdev-meta",
+        name: "Web Development Marketing Card",
+        department: "web_dev",
+        opening_balance: 0,
+        actual_balance: 0,
+        created_at: timestamp,
+        updated_at: timestamp
+      },
+      {
+        id: "mc-dm-credit",
+        name: "Digital Marketing Card",
+        department: "digital_marketing",
+        opening_balance: 0,
+        actual_balance: 0,
+        created_at: timestamp,
+        updated_at: timestamp
+      }
+    ],
+    payments: [],
+    payment_distributions: [],
+    employee_payment_shares: [],
+    distribution_transfers: [],
+    transfers_log: [],
+    reimbursement_log: [],
+    payroll_disbursement_log: [],
+    salary_pool_arrears_ledger: [],
+    salary_pool_person_owed: costBasis
+      .filter(item => item.category !== CostCategory.OVERHEAD)
+      .map(item => ({
+        id: `spo-${item.id}`,
+        employee_name: item.name,
+        employee_cost_basis_id: item.id,
+        amount_owed: 0,
+        note: "Set this only if your client has pending salary arrears.",
+        created_at: timestamp,
+        updated_at: timestamp
+      })),
+    drawings: [],
+    audit_logs: [],
+    import_batches: []
+  };
 }
 
 // Global in-memory instance
@@ -81,203 +260,14 @@ export function generateUUID(): string {
  * Seed initial system data if database file is empty or new
  */
 function seedDatabase() {
-  // 1. Seed Default Users
-  if (dbData.users.length === 0) {
-    dbData.users = [
-      {
-        id: "u-admin",
-        full_name: "Praavi Admin",
-        email: "admin@praavi.com",
-        password_hash: hashPassword("admin123"),
-        role: UserRole.ADMIN,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: "u-head",
-        full_name: "Finance Head Pooja",
-        email: "head@praavi.com",
-        password_hash: hashPassword("head123"),
-        role: UserRole.FINANCE_HEAD,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: "u-accountant",
-        full_name: "Praavi Accountant",
-        email: "accountant@praavi.com",
-        password_hash: hashPassword("accountant123"),
-        role: UserRole.ACCOUNTANT,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ];
-  }
+  const seed = createClientReadyState();
 
-  // 2. Seed Default Settings
-  if (dbData.settings.length === 0) {
-    dbData.settings = [
-      {
-        id: "settings-global",
-        target_profit_margin: 0.15,
-        marketing_cap_pct: 0.12,
-        current_month_number: 4, // Month 4 is July (FY starts in April)
-        webdev_marketing_budget: 45000,
-        dm_marketing_budget: 45000,
-        financial_year_start_month: 4,
-        currency_code: "INR",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ];
-  }
-
-  // 3. Seed Accounts
-  if (dbData.accounts.length === 0) {
-    dbData.accounts = [
-      {
-        id: "ba-sbi-current",
-        name: "SBI Current",
-        account_type: AccountType.BANK,
-        opening_balance: 1500000, // ₹15,00,000.00
-        actual_balance: 1500000,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: "ba-axis-current",
-        name: "Axis Current",
-        account_type: AccountType.BANK,
-        opening_balance: 1000000, // ₹10,00,000.00
-        actual_balance: 1000000,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: "ba-boi-savings",
-        name: "BOI Savings (Pooja)",
-        account_type: AccountType.BANK,
-        opening_balance: 200000, // ₹2,00,000.00
-        actual_balance: 200000,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: "ba-kotak",
-        name: "Kotak (Rent/EMI)",
-        account_type: AccountType.BANK,
-        opening_balance: 50000, // ₹50,000.00
-        actual_balance: 50000,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: "ba-janseva",
-        name: "Janseva (Profit)",
-        account_type: AccountType.BANK,
-        opening_balance: 25000, // ₹25,000.00
-        actual_balance: 25000,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: "ba-axis-savings",
-        name: "Axis Savings",
-        account_type: AccountType.BANK,
-        opening_balance: 15000, // ₹15,000.00
-        actual_balance: 15000,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ];
-  }
-
-  // 4. Seed Marketing Cards
-  if (dbData.marketing_cards.length === 0) {
-    dbData.marketing_cards = [
-      {
-        id: "mc-webdev-meta",
-        name: "Webakoof Meta Ads Card",
-        department: "web_dev",
-        opening_balance: 50000, // ₹50,000.00
-        actual_balance: 50000,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: "mc-dm-credit",
-        name: "Praavi Credit Card",
-        department: "digital_marketing",
-        opening_balance: 50000, // ₹50,000.00
-        actual_balance: 50000,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ];
-  }
-
-  // 5. Seed 20 Cost Basis items (Team, Management, Overheads)
-  if (dbData.cost_basis.length === 0) {
-    dbData.cost_basis = [
-      // Web Development Team
-      { id: "cb-prajakta", category: CostCategory.TEAM_WEBDEV, name: "Prajakta", monthly_amount: 27000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-abhi", category: CostCategory.TEAM_WEBDEV, name: "Abhi", monthly_amount: 25500, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-vaishnavee-web", category: CostCategory.TEAM_WEBDEV, name: "Vaishnavee", monthly_amount: 25000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-bhushan", category: CostCategory.TEAM_WEBDEV, name: "Bhushan", monthly_amount: 20000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-vipin", category: CostCategory.TEAM_WEBDEV, name: "Vipin", monthly_amount: 20000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-priyanka", category: CostCategory.TEAM_WEBDEV, name: "Priyanka", monthly_amount: 15000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-
-      // Digital Marketing Team
-      { id: "cb-shreyas", category: CostCategory.TEAM_DM, name: "Shreyas", monthly_amount: 35000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-prathamesh", category: CostCategory.TEAM_DM, name: "Prathamesh", monthly_amount: 22000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-shradhha", category: CostCategory.TEAM_DM, name: "Shradhha", monthly_amount: 18000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-ayush", category: CostCategory.TEAM_DM, name: "Ayush", monthly_amount: 21000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-vaishnavee-k", category: CostCategory.TEAM_DM, name: "Vaishnavee K", monthly_amount: 6000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-pratik", category: CostCategory.TEAM_DM, name: "Pratik", monthly_amount: 14000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-amrut", category: CostCategory.TEAM_DM, name: "Amrut", monthly_amount: 10000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-sumedh", category: CostCategory.TEAM_DM, name: "Sumedh", monthly_amount: 5000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-
-      // Management
-      { id: "cb-pooja", category: CostCategory.MANAGEMENT, name: "Pooja", monthly_amount: 60000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-malhar", category: CostCategory.MANAGEMENT, name: "Malhar", monthly_amount: 35000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-vishal", category: CostCategory.MANAGEMENT, name: "Vishal", monthly_amount: 40000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-aryan", category: CostCategory.MANAGEMENT, name: "Aryan", monthly_amount: 15000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-tanuja", category: CostCategory.MANAGEMENT, name: "Tanuja", monthly_amount: 10000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-sakshi", category: CostCategory.MANAGEMENT, name: "Sakshi", monthly_amount: 18000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-
-      // Overheads
-      { id: "cb-rent", category: CostCategory.OVERHEAD, name: "Rent", monthly_amount: 40000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-car-emi", category: CostCategory.OVERHEAD, name: "Car EMI", monthly_amount: 40000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-subscriptions", category: CostCategory.OVERHEAD, name: "Subscriptions", monthly_amount: 12000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-light-bill", category: CostCategory.OVERHEAD, name: "Light bill", monthly_amount: 11000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-laptop-rentals", category: CostCategory.OVERHEAD, name: "Laptop rentals", monthly_amount: 13200, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { id: "cb-misc", category: CostCategory.OVERHEAD, name: "Misc", monthly_amount: 7000, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    ];
-  }
-
-  // 6. Seed default salary_pool_person_owed outstanding amounts for employees (July migration preparation)
-  if (dbData.salary_pool_person_owed.length === 0) {
-    dbData.salary_pool_person_owed = dbData.cost_basis
-      .filter(cb => cb.category !== CostCategory.OVERHEAD)
-      .map(cb => ({
-        id: `spo-${cb.id}`,
-        employee_name: cb.name,
-        employee_cost_basis_id: cb.id,
-        amount_owed: Math.round(cb.monthly_amount * 0.1), // Seed 10% outstanding by default for interesting tracker analytics
-        note: "July 2026 legacy arrears",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }));
-  }
+  if (dbData.users.length === 0) dbData.users = seed.users;
+  if (dbData.settings.length === 0) dbData.settings = seed.settings;
+  if (dbData.accounts.length === 0) dbData.accounts = seed.accounts;
+  if (dbData.marketing_cards.length === 0) dbData.marketing_cards = seed.marketing_cards;
+  if (dbData.cost_basis.length === 0) dbData.cost_basis = seed.cost_basis;
+  if (dbData.salary_pool_person_owed.length === 0) dbData.salary_pool_person_owed = seed.salary_pool_person_owed;
 }
 
 /**
@@ -285,18 +275,18 @@ function seedDatabase() {
  */
 const SUPABASE_DB_URL = process.env.SUPABASE_DB_URL;
 
-const pool = new pg.Pool({
+const pool = SUPABASE_DB_URL ? new pg.Pool({
   connectionString: SUPABASE_DB_URL,
   ssl: {
     rejectUnauthorized: false
   }
-});
+}) : null;
 
 /**
  * Initialize Supabase Postgres and load database state
  */
 export async function initSupabaseDb() {
-  if (!SUPABASE_DB_URL) {
+  if (!SUPABASE_DB_URL || !pool) {
     console.log("SUPABASE_DB_URL is not set. Falling back to local db.json persistence...");
     seedDatabase();
     return;
@@ -304,8 +294,7 @@ export async function initSupabaseDb() {
 
   try {
     console.log("Connecting to Supabase PostgreSQL Database...");
-    
-    // Create the state table if it doesn't exist
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS praavi_state (
         id INT PRIMARY KEY,
@@ -314,12 +303,10 @@ export async function initSupabaseDb() {
       )
     `);
 
-    // Fetch the latest state from Supabase
     const res = await pool.query("SELECT state_json FROM praavi_state WHERE id = 1");
     if (res.rows.length > 0) {
       console.log("Database state successfully loaded from Supabase PostgreSQL!");
       dbData = res.rows[0].state_json;
-      // Also sync it locally to db.json as a backup
       fs.writeFileSync(DB_FILE, JSON.stringify(dbData, null, 2), "utf-8");
     } else {
       console.log("No existing state found in Supabase. Initializing default state...");
@@ -331,9 +318,8 @@ export async function initSupabaseDb() {
       console.log("Default state seeded and saved to Supabase PostgreSQL!");
     }
   } catch (err) {
-    console.error("❌ Error initializing Supabase Database:", err);
+    console.error("Error initializing Supabase Database:", err);
     console.log("Falling back to local db.json persistence...");
-    // Fallback to local db.json if database connection fails
     if (fs.existsSync(DB_FILE)) {
       try {
         const data = fs.readFileSync(DB_FILE, "utf-8");
@@ -356,10 +342,10 @@ export function loadDb() {
       const data = fs.readFileSync(DB_FILE, "utf-8");
       dbData = JSON.parse(data);
     }
-    // Seed database items
     seedDatabase();
-    // Flush back to ensure schemas are saved
-    saveDb();
+    if (!SUPABASE_DB_URL) {
+      saveDb();
+    }
   } catch (err) {
     console.error("Error loading database:", err);
     seedDatabase();
@@ -372,17 +358,28 @@ export function loadDb() {
 export function saveDb() {
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(dbData, null, 2), "utf-8");
-    
-    // Asynchronously save to Supabase Postgres
-    pool.query(
-      "INSERT INTO praavi_state (id, state_json, updated_at) VALUES (1, $1, NOW()) ON CONFLICT (id) DO UPDATE SET state_json = EXCLUDED.state_json, updated_at = NOW()",
-      [dbData]
-    ).catch(err => {
-      console.error("❌ Failed to save state to Supabase PostgreSQL:", err);
-    });
+
+    if (pool) {
+      pool.query(
+        "INSERT INTO praavi_state (id, state_json, updated_at) VALUES (1, $1, NOW()) ON CONFLICT (id) DO UPDATE SET state_json = EXCLUDED.state_json, updated_at = NOW()",
+        [dbData]
+      ).catch(err => {
+        console.error("Failed to save state to Supabase PostgreSQL:", err);
+      });
+    }
   } catch (err) {
     console.error("Error saving database:", err);
   }
+}
+
+export function getDbSnapshot(): DatabaseSchema {
+  return JSON.parse(JSON.stringify(dbData));
+}
+
+export function resetDbToSeedState(): DatabaseSchema {
+  dbData = createClientReadyState();
+  saveDb();
+  return getDbSnapshot();
 }
 
 // Immediately load DB from local json on initialization
@@ -446,7 +443,6 @@ export const db = {
       return dbData.cost_basis[index];
     },
     delete: (id: string) => {
-      // Soft-delete: mark is_active = false as required
       const index = dbData.cost_basis.findIndex(c => c.id === id);
       if (index === -1) return false;
       dbData.cost_basis[index].is_active = false;
@@ -746,7 +742,6 @@ export const db = {
         created_at: new Date().toISOString()
       };
       dbData.audit_logs.push(newLog);
-      // Prune logs if they exceed 500 to save space in db.json
       if (dbData.audit_logs.length > 500) {
         dbData.audit_logs.shift();
       }
@@ -768,9 +763,6 @@ export const db = {
       return newBatch;
     },
     rollback: (batchId: string) => {
-      // Find all items imported in this batch, or payments/drawings/etc, but let's implement soft rollback or delete
-      // To keep it simple, we delete payments and restore state if needed.
-      // We will define manual transaction rollback in the routes.
       dbData.import_batches = dbData.import_batches.filter(b => b.id !== batchId);
       saveDb();
       return true;
@@ -795,7 +787,7 @@ export function verifyToken(token: string): any {
     if (signature !== expectedSignature) return null;
     const decodedPayload = JSON.parse(Buffer.from(payload, "base64url").toString("utf-8"));
     if (decodedPayload.exp && decodedPayload.exp < Math.floor(Date.now() / 1000)) {
-      return null; // Expired
+      return null;
     }
     return decodedPayload;
   } catch (err) {
